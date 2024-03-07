@@ -11,21 +11,23 @@ import {
   } from "@material-tailwind/react";
 
 import { getUserInfo } from "@/services/auth.service";
-import { createDataset } from "@/services/dataset.service";
-import { useMaterialTailwindController, setUserInfo } from "@/context";
+import { createDataset, updateDataset } from "@/services/dataset.service";
+import { useMaterialTailwindController } from "@/context";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import { Snackbar, Alert, Backdrop } from "@mui/material";
 import Select from 'react-select';
 
-export function AddDatasetDialog({ open, onClose }) {
+export function AddDatasetDialog({ open, onClose, edit, selectedEditDataset }) {
     const [controller, dispatch] = useMaterialTailwindController();
-    const { accessToken, userInfo } = controller;
+    const { accessToken } = controller;
 
     const [newDataset, setnewDataset] = React.useState({
         name: '',
         description: '',
         table_name: ''
     });  
+
+    const [selectedDatasetUpdate, setSelectedDatasetUpdate] = React.useState({});
 
     const [loading, setLoading] = React.useState(false);    
     const [showSnackbar, setShowSnackbar] = React.useState(false);
@@ -34,7 +36,12 @@ export function AddDatasetDialog({ open, onClose }) {
     const handleSubmitDataset = async () => {
         try {
             setLoading(true);
-            const res = await createDataset(newDataset, accessToken );
+            let res
+            if (edit) {
+                res = await updateDataset(selectedEditDataset.value.id, selectedDatasetUpdate, accessToken);
+            } else {
+                res = await createDataset(newDataset, accessToken);
+            }
             if (res.status === 200 || res.status === 201) {
                 const resUserInfo = await getUserInfo(accessToken);  
                 if (resUserInfo.status === 200){
@@ -70,6 +77,7 @@ export function AddDatasetDialog({ open, onClose }) {
                     window.location.reload();
                 }}
                 severity="success"
+                variant="filled"
             >
                 Dataset Created Successfully!
             </Alert>
@@ -96,23 +104,35 @@ export function AddDatasetDialog({ open, onClose }) {
             </Alert>      
         </Snackbar>           
         <Dialog size="sm" open={open} onClose={onClose} className="p-4 max-w-screen overflow-auto">
-        <DialogHeader onClose={onClose} className="justify-center">Add New Dataset Table</DialogHeader>
+        <DialogHeader onClose={onClose} className="justify-center">{edit ? `Edit Dataset ${selectedEditDataset.label}` : 'Add New Dataset'}</DialogHeader>
         <DialogBody className="overflow-auto">
             {/* Create input with menu */}
             <form onSubmit={handleSubmitDataset}>  
                 <div className="overflow-auto no-scrollbar flex flex-col gap-6 w-full pt-2">                                                                                                                         
                     <Input
-                        onChange={(e) => setnewDataset(prevState => ({...prevState, name: e.target.value}))}
-                        label="Dataset name"
+                        onChange={(e) => {
+                            !edit ? setnewDataset(prevState => ({...prevState, name: e.target.value})) 
+                            : setSelectedDatasetUpdate(prevState => ({...prevState, name: e.target.value}))
+                        }}
+                        label="Dataset name"                        
                         required
+                        defaultValue={edit ? selectedEditDataset?.value?.name : ''}                        
                     />                             
                     <Input
-                        onChange={(e) => setnewDataset(prevState => ({...prevState, description: e.target.value}))}
-                        label="Dataset description"                        
+                        onChange={(e) => {
+                            !edit ? setnewDataset(prevState => ({...prevState, description: e.target.value}))
+                            : setSelectedDatasetUpdate(prevState => ({...prevState, description: e.target.value}))
+                        }}
+                        label="Dataset description"                            
+                        defaultValue={edit ? selectedEditDataset?.value?.description : ''}                    
                     />                    
                     <Input
-                        onChange={(e) => setnewDataset(prevState => ({...prevState, table_name: e.target.value}))}
-                        label="Dataset table name"
+                        onChange={(e) => {
+                            !edit ? setnewDataset(prevState => ({...prevState, table_name: e.target.value}))
+                            : setSelectedDatasetUpdate(prevState => ({...prevState, table_name: e.target.value}))
+                        }}
+                        label="Dataset table name"                        
+                        defaultValue={edit ? selectedEditDataset?.value?.table_name : ''}
                         required
                     />                                                                                                              
                 </div>   

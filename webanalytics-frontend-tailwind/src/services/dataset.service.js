@@ -14,7 +14,17 @@ export const createDataset = async (newDataset, accessToken) => {
         }
     });
     return response;
+}
 
+export const updateDataset = async (datasetId, dataset, accessToken) => {
+    const response = await axios.patch(`${BASE_API_URL}dataset/${datasetId}/`, {
+        ...dataset
+    }, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`
+        }
+    });
+    return response;
 }
 
 export const getDatasetColumns = async (datasetId, accessToken) => {

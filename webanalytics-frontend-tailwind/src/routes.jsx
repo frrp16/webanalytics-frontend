@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/24/solid";
 
 import { useMaterialTailwindController } from "@/context";
-import { Home, Profile, Tables, Notifications, Datasets } from "@/pages/dashboard";
+import { Home, Profile, Tables, Notifications, Datasets, Prediction } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
 
 const icon = {
@@ -44,6 +44,12 @@ export const routes = [
         name: "notifications",
         path: "/notifications",
         element: <Notifications />,
+      },
+      {
+        icon: <ChartBarIcon {...icon} />,
+        name: "prediction",
+        path: "/prediction",
+        element: <Prediction />,
       },
     ],
   },

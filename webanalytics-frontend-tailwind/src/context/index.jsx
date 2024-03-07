@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 
 import Cookies from "js-cookie";
@@ -32,6 +32,16 @@ export function reducer(state, action) {
     case "SET_USER_INFO": {
       return { ...state, userInfo: action.value };
     }
+    case "SET_SOCKET":{
+      return { ...state, socket: action.value };
+    }
+    case "SET_SOCKET_URL":{
+      return { ...state, socketURL: action.value };
+    }
+    case "SET_NOTIFICATION_MESSAGE": {
+      console.log("SET_NOTIFICATION_MESSAGE", action.value);
+      return { ...state, notificationMessage: action.value };
+    }
     case "SET_SELECTED_DATASET": {
       return { ...state, selectedDataset: action.value };
     }
@@ -43,7 +53,7 @@ export function reducer(state, action) {
 
 export function MaterialTailwindControllerProvider({ children }) {
   const accessTokenCookie = Cookies.get("accessToken");
-  // const userInfoCookie = Cookies.get("userInfo");
+  // const userInfoCookie = Cookies.get("userInfo");  
   
   const initialState = {
     // style context
@@ -56,19 +66,33 @@ export function MaterialTailwindControllerProvider({ children }) {
     // user context
     accessToken: accessTokenCookie ? JSON.parse(accessTokenCookie) : null,
     userInfo:  JSON.parse(localStorage.getItem('userInfo')) || null,
-    socketURL: "",
+    socket: null,
+    socketURL:  null,
+    notificationMessage: null,
     // dataset context
     selectedDataset: null,
     
   };
 
   const [controller, dispatch] = React.useReducer(reducer, initialState);
+
+    // Initialize WebSocket connection
+    // useEffect(() => {
+    //   if (controller.socketURL && controller.userInfo) {
+    //     console.log(controller.socketURL);
+    //     const ws = new WebSocket(controller.socketURL);
+    //     setSocket(dispatch, ws);
+    //     console.log("WebSocket connection initialized");
+    //     return () => {
+    //       ws.close();
+    //     };
+    //   }
+    // }, [controller.socketURL]);
+
   const value = React.useMemo(
     () => [controller, dispatch],
     [controller, dispatch]
   );
-    
-
 
   return (
     <MaterialTailwind.Provider value={value}>
@@ -111,5 +135,11 @@ export const setAccessToken = (dispatch, value) =>
   dispatch({ type: "SET_ACCESS_TOKEN", value });
 export const setUserInfo = (dispatch, value) =>
   dispatch({ type: "SET_USER_INFO", value });
+export const setSocket = (dispatch, value) =>
+  dispatch({ type: "SET_SOCKET", value });
+export const setSocketURL = (dispatch, value) =>
+  dispatch({ type: "SET_SOCKET_URL", value });
+export const setNotificationMessage = (dispatch, value) =>
+  dispatch({ type: "SET_NOTIFICATION_MESSAGE", value });
 export const setSelectedDataset = (dispatch, value) =>
   dispatch({ type: "SET_SELECTED_DATASET", value });

@@ -7,18 +7,19 @@ import {
   Typography, Spinner
 } from "@material-tailwind/react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { useMaterialTailwindController, setAccessToken, setUserInfo } from "@/context";
+import { useMaterialTailwindController, setAccessToken, setUserInfo, setSocketURL, setSocket } from "@/context";
 import { login, getUserInfo } from "@/services/auth.service";
 import { Snackbar, Alert } from "@mui/material";
 
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 
+const BASE_API_URL = "http://127.0.0.1:8000/";
 
 export function SignIn() {
   const navigate = useNavigate();
 
   const [controller, dispatch] = useMaterialTailwindController();
-  const { accessToken, userInfo } = controller;  
+  const { accessToken, userInfo, socketURL, socket } = controller;  
 
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');  
@@ -36,7 +37,10 @@ export function SignIn() {
         setAccessToken(dispatch, resAccessToken.data.access);        
         const resUserInfo = await getUserInfo(resAccessToken.data.access);
         if (resUserInfo.status === 200){
-          setUserInfo(dispatch, resUserInfo.data);          
+          setUserInfo(dispatch, resUserInfo.data);
+          setSocketURL(dispatch, `ws://${BASE_API_URL.replace('http://', '')}ws/notification/${resUserInfo.data.username}/`);
+          setSocket(dispatch, new WebSocket(`ws://${BASE_API_URL.replace('http://', '')}ws/notification/${resUserInfo.data.username}/`));
+
           setLoading(false);
           setShowSnackbar(true);
           await new Promise((resolve) => setTimeout(resolve, 5000));

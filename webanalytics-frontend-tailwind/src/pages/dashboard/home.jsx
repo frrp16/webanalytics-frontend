@@ -1,23 +1,17 @@
-import React from "react";
-import { format, parseISO } from 'date-fns';
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { format, parseISO, set } from 'date-fns';
 import {
   Typography,
   Card,
   CardHeader,
-  CardBody,
-  IconButton,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem,
-  Avatar,
+  CardBody,  
   Tooltip,
   Progress,
-  Button
+  Button, IconButton
 } from "@material-tailwind/react";
-import {
-  EllipsisVerticalIcon,
-  ArrowUpIcon, PlusIcon
+import {  
+  ArrowUpIcon, PlusIcon, ArrowPathIcon, TrashIcon, PencilIcon
 } from "@heroicons/react/24/outline";
 import { 
   TableCellsIcon,
@@ -37,10 +31,13 @@ import { useMaterialTailwindController } from "@/context";
 
 export function Home() {
   const [controller, dispatch] = useMaterialTailwindController();
-  const { sidenavType, accessToken, userInfo } = controller;
+  const { sidenavType, accessToken, userInfo, socket } = controller;
 
   const [showAddConnection, setShowAddConnection] = React.useState(false);
   const [showAddDataset, setShowAddDataset] = React.useState(false);
+  const [editDataset, setEditDataset] = React.useState(false);
+
+  const [selectedEditDataset, setSelectedEditDataset] = React.useState({});
 
   const connectionDetails = userInfo ? [
     { label: 'Engine', value: userInfo?.connection?.database_type},
@@ -55,15 +52,21 @@ export function Home() {
   <>
     <AddConnectionDialog
       open={showAddConnection}
-      onClose={() => setShowAddConnection(false)}
+      onClose={() => setShowAddConnection(false)}         
     />
     <AddDatasetDialog
       open={showAddDataset}
-      onClose={() => setShowAddDataset(false)}
+      onClose={() => {
+        setEditDataset(false);
+        setShowAddDataset(false);
+      }}
+      edit={editDataset}    
+      selectedEditDataset={selectedEditDataset}
+            
     />
 
     <div className="mt-12">      
-      <div className="mb-6 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
         <Typography variant="h4" className="text-blue-gray-700">
           {`Welcome, ${userInfo?.first_name} ${userInfo?.last_name}!`}
         </Typography>
@@ -71,43 +74,38 @@ export function Home() {
                   
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-1 xl:grid-cols-2">
         <Card className=" border border-blue-gray-100 shadow-sm w-full">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 flex items-center justify-between px-6 pt-6"
-          >
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-1">
-                Connection
-              </Typography>
+          <CardHeader variant="gradient" color="gray" className="p-6">
+            <Typography variant="h6" color="white">
+              Connection
+            </Typography>            
+            <div>            
               <Typography
                 variant="small"
                 className="flex items-center gap-1 font-normal text-blue-gray-600"
               >
                 {userInfo?.connection ? 
                 <>
-                  <CheckCircleIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  <strong className="text-green-500">Connected to database</strong>
+                  <CheckCircleIcon strokeWidth={2} className="h-4 w-4 text-white" />
+                  <strong className="text-green-300">Connected to database</strong>
                 </> : 
                 <>
-                  <XCircleIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  <strong className="text-red-500">Not connected to any database</strong>
+                  <XCircleIcon strokeWidth={2} className="h-4 w-4 text-white" />
+                  <strong className="text-red-300">Not connected to any database</strong>
                 </>}
               </Typography>
               </div>
-          </CardHeader>
+          </CardHeader>          
           <CardBody className="px-6 pb-6">
             {userInfo?.connection ?               
             <>  
-              <div className="flex flex-col gap-4 py-3"> 
+              <div className="flex flex-col gap-4"> 
               <table className="table-auto text-left w-full">
                 <tbody>
                 {connectionDetails.map((detail, index) => {
                   return (                                                                 
                     <tr key={index}>
                       <td className=" font-bold border-blue-gray-100 px-4 py-2 items-start">                              
-                          <Typography variant="small" className="font-semibold text-blue-gray-700">
+                          <Typography variant="small" className="font-semibold text-blue-gray-700 uppercase">
                             {detail.label} 
                           </Typography>                          
                       </td>
@@ -143,7 +141,9 @@ export function Home() {
             <Button                   
               className="flex flex-row gap-4 items-center" 
               fullWidth 
-              onClick={() => setShowAddConnection(!showAddConnection)}>
+              onClick={() => {
+                setShowAddConnection(!showAddConnection);                
+                }}>
               <PlusIcon                    
                 className={`w-5 h-5 text-white 
                 ${showAddConnection ? 'transform rotate-90 transition-transform' : 'transform rotate-0 transition-transform'}`}                    
@@ -180,7 +180,11 @@ export function Home() {
                     <Button                   
                       className="flex flex-row gap-4 items-center" 
                       fullWidth 
-                      onClick={() => setShowAddDataset(!showAddDataset)}>
+                      onClick={() => {
+                        setEditDataset(false);
+                        setShowAddDataset(!showAddDataset);
+                        console.log(showAddDataset);
+                        }}>
                       <PlusIcon                    
                         className={`w-5 h-5 text-white 
                         ${showAddDataset ? 'transform rotate-90 transition-transform' : 'transform rotate-0 transition-transform'}`}                    
@@ -205,13 +209,15 @@ export function Home() {
                     <Typography className="font-normal text-blue-gray-600 pb-2">
                     &nbsp;Models Trained<strong className="text-green-500"></strong>                      
                     </Typography>
-                    <Button                   
-                      className="flex flex-row gap-4 items-center" 
-                      fullWidth
-                      onClick={() => console.log("SHow Models")}>
-                      
-                      Show Models
-                    </Button>
+                    <Link to="/dashboard/prediction">
+                      <Button
+                        className="flex flex-row gap-4 items-center" 
+                        fullWidth
+                      >
+                        
+                        Show Models
+                      </Button>
+                    </Link>
                   </>
                 }
               />
@@ -242,7 +248,7 @@ export function Home() {
                   Datasets
                 </Typography>
               </CardHeader>
-              <CardBody className="px-6 pb-6">
+              <CardBody className="px-6 pb-6 overflow-auto">
                 <table className="w-full min-w-[640px] table-auto">
                   <thead >
                     <tr>
@@ -263,14 +269,14 @@ export function Home() {
                   </thead>
                   <tbody>
                     {userInfo?.datasets.map(
-                      ({ name, description, created_at, status }, key) => {
+                      (dataset, key) => {
                         const className = `py-3 px-5 ${
-                          key === userInfo?.datasets.length - 1
+                          key === userInfo?.datasets.length
                             ? ""  
                             : "border-b border-blue-gray-50"
                         }`;
                         return (
-                          <tr key={name}>
+                          <tr key={key}>
                             <td className={className}>
                               <div className="flex items-center gap-4">
                                 <div>
@@ -279,37 +285,74 @@ export function Home() {
                                     color="blue-gray"
                                     className="font-semibold"
                                   >
-                                    {name}
+                                    {dataset.name}
                                   </Typography>
                                   <Typography className="text-xs font-normal text-blue-gray-500">
-                                    {description ? description : "No description"}
+                                    {dataset.description ? dataset.description : "No description"}
                                   </Typography>
                                 </div>
                               </div>
                             </td>
                             <td className={className}>
                               <Typography className="text-xs font-semibold text-blue-gray-600">
-                                {format(parseISO(created_at), 'dd-MM-yyyy HH:mm:ss')}
+                                {format(parseISO(dataset.created_at), 'dd-MM-yyyy HH:mm:ss')}
                               </Typography>
                             </td>
                             <td className={className}>
-                              <div className="w-10/12">
+                              <div className="">
                                 <Typography
                                   variant="small"
                                   className="mb-1 block text-xs font-medium text-blue-gray-600"
                                 >
-                                  {status}
+                                  {dataset.status}
                                 </Typography>
                               </div>
                             </td>
                             <td className={className}>
-                              <div className="w-10/12">
-                                <Typography
-                                  variant="small"
-                                  className="mb-1 block text-xs font-medium text-blue-gray-600"
-                                >
-                                  
-                                </Typography>
+                              <div className="flex gap-4">
+                                <Tooltip content="Refresh">
+                                  <IconButton
+                                    color="green"
+                                    onClick={() => console.log('clicked')}
+                                  >
+                                    <ArrowPathIcon
+                                      strokeWidth={2}
+                                      className="h-5 w-5"
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip content="Edit">
+                                  <IconButton
+                                    color="blue-gray"
+                                    onClick={() => {                                        
+                                      console.log('edit', dataset); 
+                                      setSelectedEditDataset({
+                                        label: dataset.name,
+                                        value: dataset,
+                                      })
+                                      setEditDataset(true);                                      
+                                      setShowAddDataset(true);       
+                                      console.log(showAddDataset);   
+                                      console.log(editDataset);                                                              
+                                    }}
+                                  >
+                                    <PencilIcon
+                                      strokeWidth={2}
+                                      className="h-5 w-5"
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip content="Delete">
+                                  <IconButton
+                                    color="red"
+                                    onClick={() => console.log('deleted')}
+                                  >
+                                    <TrashIcon
+                                      strokeWidth={2}
+                                      className="h-5 w-5"
+                                    />
+                                  </IconButton>
+                                </Tooltip>
                               </div>
                             </td>
                           </tr>
@@ -465,7 +508,7 @@ export function Home() {
                           </Typography>
                         </td>
                         <td className={className}>
-                          <div className="w-10/12">
+                          <div className="">
                             <Typography
                               variant="small"
                               className="mb-1 block text-xs font-medium text-blue-gray-600"

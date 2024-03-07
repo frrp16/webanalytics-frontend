@@ -6,13 +6,12 @@ import {
     Typography,
     Spinner,
     Button, IconButton,
-    Menu, MenuList, MenuHandlerProps, MenuItem, MenuButton, MenuHandler, CardFooter,
+    Menu, MenuList, MenuItem, MenuHandler, CardFooter,
 } from "@material-tailwind/react";
 import { ChevronDoubleDownIcon, ChevronDownIcon, ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { Snackbar, Alert } from "@mui/material";
 import { getDatasetData, getPreviosNextPage } from "@/services/dataset.service";
 import { useMaterialTailwindController, setSelectedDataset } from "@/context";
-
 
   export function Datasets() {
     const [controller, dispatch] = useMaterialTailwindController();
@@ -187,7 +186,7 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
               <tbody>
                 {datasetData.current.results.map((row, key) => {
                   const className = `py-3 px-5 ${
-                    key === datasetData.current.results.length - 1
+                    key === datasetData.current.results.length
                       ? ""
                       : "border-b border-r border-blue-gray-50"
                   }`;
