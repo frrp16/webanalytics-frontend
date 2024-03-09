@@ -34,6 +34,7 @@ export function AddConnectionDialog({ open, onClose }) {
     const [loading, setLoading] = React.useState(false);
     const [viewPassword, setViewPassword] = React.useState(false);
     const [showSnackbar, setShowSnackbar] = React.useState(false);
+    const [showError, setShowError] = React.useState(false); 
 
     const handleSubmitConnection = async () => {
         try {
@@ -50,7 +51,7 @@ export function AddConnectionDialog({ open, onClose }) {
             }
         } catch (error) {
             console.error(error);
-            alert("Create Connection Failed!")
+            setShowError(true);
             setLoading(false);
         }
         finally {
@@ -61,6 +62,7 @@ export function AddConnectionDialog({ open, onClose }) {
     return (
     <>
         <Snackbar
+            sx={{ zIndex: 10000 }}
             open={showSnackbar}
             anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             autoHideDuration={5000}
@@ -76,7 +78,27 @@ export function AddConnectionDialog({ open, onClose }) {
             >
                 Connection Created Successfully!
             </Alert>
-        </Snackbar>        
+        </Snackbar>   
+        <Snackbar
+            sx={{ zIndex: 10000 }}
+            open={showError}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            autoHideDuration={5000}
+            onClose={() =>{
+                setShowError(false);             
+            }}
+            >      
+            <Alert
+                onClose={() =>{
+                setShowError(false);                
+                }}
+                severity="error"
+                variant="filled"
+                sx={{ width: '100%' }}
+            >
+                Connection Creation Failed!
+            </Alert>      
+        </Snackbar>      
         <Dialog size="sm" open={open} onClose={onClose} className="p-4 max-w-screen">
         <DialogHeader onClose={onClose} className="justify-center">Add Database Connection</DialogHeader>
         <DialogBody className="overflow-auto">

@@ -7,7 +7,7 @@ import {
     DialogFooter,
     Menu, MenuItem, MenuButton, MenuHandler, MenuList,
     Input,
-    Checkbox,
+    Checkbox, Switch,
     Typography,
   } from "@material-tailwind/react";
 
@@ -27,6 +27,7 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
     const [loading, setLoading] = React.useState(false);    
     const [showSnackbar, setShowSnackbar] = React.useState(false);
     const [showError, setShowError] = React.useState(false);
+    const [advanceOptions, setAdvanceOptions] = React.useState(false);
     
 
     const handleSubmitModel = async (e) => {}
@@ -73,13 +74,23 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                 Model Creation Failed!
             </Alert>      
         </Snackbar>           
-        <Dialog size="sm" open={open} onClose={onClose} className="p-4 max-w-screen overflow-auto">
+        <Dialog size="sm" open={open} onClose={onClose} className="p-4 max-w-screen max-h-screen overflow-auto">
         <DialogHeader onClose={onClose} className="justify-center">
-            {`Add new deep learning model for ${selectedDataset.value.name}`}</DialogHeader>
+            <Typography                
+                className="font-semibold text-xl"
+            >{`Add new deep learning model for ${selectedDataset?.value?.name}`}
+            </Typography>
+        </DialogHeader>
         <DialogBody className="overflow-auto">
             {/* Create input with menu */}
             <form onSubmit={handleSubmitModel}>  
-                <div className="overflow-auto no-scrollbar flex flex-col gap-6 w-full pt-2">                    
+                <div className="overflow-auto no-scrollbar flex flex-col gap-6 w-full pt-2">                                                                                                                                   
+                    <Input
+                        onChange={(e) => {
+                        }}
+                        label="Model name"                        
+                        required                                          
+                    />                      
                     <div>
                         <Select
                             onChange={(e) => setNewModel(prevState => ({...prevState, algorithm: e.value}))}
@@ -88,6 +99,7 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             required    
                             options={
                                 [
+                                    { value: 'RANDOM_FOREST', label: 'Random Forest' },
                                     { value: 'MLP', label: 'Multilayer Perceptron' },
                                     { value: 'LSTM', label: 'Long Short-Term Memory' },
                                     { value: 'CNN', label: 'Convolutional Neural Network' },                                    
@@ -101,14 +113,8 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             <InformationCircleIcon className="h-4 w-4" />
                             Choose the algorithm for the model
                         </Typography>
-                    </div>                                                                                                                
-                    <Input
-                        onChange={(e) => {
-                        }}
-                        label="Model name"                        
-                        required                                          
-                    />                     
-                    <div>
+                    </div>                    
+                    {newModel.algorithm != "RANDOM_FOREST" && <div>
                         <Input
                             onChange={(e) => {
                             }}
@@ -122,8 +128,8 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             <InformationCircleIcon className="h-4 w-4" />
                             This would be the number of features that the model would take as input
                         </Typography>
-                    </div>  
-                    <div>
+                    </div>}  
+                    {newModel.algorithm != "RANDOM_FOREST" && <div>
                         <Input
                             onChange={(e) => {
                             }}
@@ -137,49 +143,113 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             <InformationCircleIcon className="h-4 w-4" />
                             This would be the number of target that the model would predict
                         </Typography>
-                    </div>  
-                    <Input
-                        onChange={(e) => {
-                        }}
-                        label="Model name"                        
-                        required    
-                        
-                    />                                     
-                    <div className="flex flex-row gap-4">
+                    </div>} 
+                    <div className="mx-2"> 
+                        <Switch
+                            checked={advanceOptions}
+                            onChange={(e) => setAdvanceOptions(e.target.checked)}
+                            label={
+                                <Typography
+                                    variant="small"                                    
+                                    className="flex items-center justify-start font-medium"
+                                >
+                                    Advance Options
+                                </Typography>
+                            }
+                        />  
+                    </div>   
+                    {advanceOptions && newModel.algorithm == "RANDOM_FOREST" &&
+                    <>
+                    <div>
                         <Input
+                            onChange={(e) => {
+                            }}
+                            label="Maximum depth"                                                                                   
+                        />  
+                        <Typography
+                            variant="small"                            
+                            className="mt-2 flex gap-1 font-normal text-xs"
+                        >
+                            <InformationCircleIcon className="h-4 w-4" />
+                            The maximum depth of the tree. 
+                        </Typography>
+                    </div>
+                    <div>
+                        <Input
+                            onChange={(e) => {
+                            }}
+                            label="Maximum tree"                                                                                
+                        />  
+                        <Typography
+                            variant="small"                            
+                            className="mt-2 flex gap-1 font-normal text-xs"
+                        >
+                            <InformationCircleIcon className="h-4 w-4" />
+                            The maximum number of trees in the forest.
+                        </Typography>
+                    </div>
+                    </>}
+                    {advanceOptions &&  newModel.algorithm != "RANDOM_FOREST" &&
+                    <>     
+                    <div>
+                        <Input
+                            onChange={(e) => {
+                            }}
+                            label="Hidden layers"                                                                               
+                        />  
+                        <Typography
+                            variant="small"                            
+                            className="mt-2 flex gap-1 font-normal text-xs"
+                        >
+                            <InformationCircleIcon className="h-4 w-4" />
+                            Enter the number of hidden layers for the model separated by comma. Eg. 128, 64, 32
+                        </Typography>
+                    </div>    
+                    <Input
                             onChange={(e) => {
                             }}
                             label="Epochs"
                             type="number"                        
-                        />               
+                        />                       
+                    <div className="flex flex-row gap-4 w-full">                                     
                         <Input
                             onChange={(e) => {
                             }}
                             label="Batch size"
                             type="number" 
                         />
+                        {
+                            newModel?.algorithm === 'LSTM' &&
+                            <Input
+                                onChange={(e) => {
+                                }}
+                                label="Time steps"
+                                type="number"
+                            />
+                        }
                     </div>
-                    <div className="flex flex-row gap-6 justify-between">                                    
+                    <div className="flex flex-row gap-4">                                    
                         <div className="w-full">
                             <Select
                                 onChange={(e) => {}}
-                                className="w-full border rounded text-sm font-normal text-blue-gray-500"
-                                placeholder="Loss function"                              
+                                className="w-full border rounded text-xs font-normal text-blue-gray-500"
+                                placeholder="Activation function"                              
                                 options={
                                     [
-                                        { value: 'mean_squared_error', label: 'Mean Squared Error' },
-                                        { value: 'mean_absolute_error', label: 'Mean Absolute Error' },
-                                        { value: 'categorical_crossentropy', label: 'Categorical Crossentropy' },
-                                        { value: 'binary_crossentropy', label: 'Binary Crossentropy' },
-                                    ]                            
+                                        { value: 'relu', label: 'ReLU' },
+                                        { value: 'tanh', label: 'Tanh' },
+                                        { value: 'sigmoid', label: 'Sigmoid' },
+                                        { value: 'softmax', label: 'Softmax' },
+                                        { value: 'linear', label: 'Linear' },
+                                    ]                           
                                 }                                                                                                           
                             />
                             <Typography
                                 variant="small"                            
-                                className="mt-2 flex items-center gap-1 font-normal text-xs"
+                                className="mt-2 flex  gap-1 font-normal text-xs"
                             >
                                 <InformationCircleIcon className="h-4 w-4" />
-                                Choose the loss function for the model. 
+                                Hidden layers activation function. 
                             </Typography>
                         </div> 
                         <div className="w-full">
@@ -197,13 +267,14 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             />   
                             <Typography
                                 variant="small"                            
-                                className="mt-2 flex items-center gap-1 font-normal text-xs"
+                                className="mt-2 flex gap-1 font-normal text-xs"
                             >
                                 <InformationCircleIcon className="h-4 w-4" />
-                                Choose the optimizer for the model.
+                                Optimizer when training the model
                             </Typography>
                         </div>
-                    </div>                                                                                                                                                            
+                    </div>  
+                    </> }                                                                                                                                                                              
                 </div>   
             </form>                  
         </DialogBody>

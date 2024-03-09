@@ -42,6 +42,7 @@ export const register = async (first_name, last_name, username, email, password)
 export const logout = () => {
     Cookies.remove('accessToken');
     Cookies.remove('userInfo');
+    localStorage.clear()
     sessionStorage.clear()
 };
 

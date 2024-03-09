@@ -116,7 +116,7 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
               variant="filled"
               sx={{ width: '100%' }}
           >
-              Failed to Load Dataset!
+              Failed to Load Models!
           </Alert>      
       </Snackbar>
       <div className="mt-12 mb-8 flex flex-col gap-12">
@@ -191,7 +191,7 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
             </Typography>
           </CardHeader>
           <CardBody className="overflow-scroll px-0 pt-0 pb-2 max-h-[500px]">            
-            {datasetModel.current ? ( 
+            {datasetModel.current?.length > 0  ? ( 
             <table className="w-full min-w-[640px] table-auto">
               <thead className="sticky top-0 z-1 bg-white">
                 <tr>
@@ -403,7 +403,17 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
                 })}
               </tbody>
             </table>
-              ) : null}              
+          ) : 
+          (
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="flex flex-col items-center justify-center gap-4">                
+                <Typography variant="h6" color="blue-gray" className="font-normal">
+                  No Model Found
+                </Typography>
+              </div>
+            </div>
+                
+          )}              
             
           </CardBody>
           <CardFooter className="justify-center">

@@ -72,8 +72,8 @@ export function Home() {
         </Typography>
       </div> 
                   
-      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-1 xl:grid-cols-2">
-        <Card className=" border border-blue-gray-100 shadow-sm w-full">
+      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-1 xl:grid-cols-3">
+        <Card className=" border border-blue-gray-100 shadow-sm w-full md:col-span-1 xl:col-span-2">
           <CardHeader variant="gradient" color="gray" className="p-6">
             <Typography variant="h6" color="white">
               Connection
