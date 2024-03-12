@@ -73,9 +73,9 @@ export const getPreviosNextPage = async (url, accessToken) => {
 }
 
 
-export const updateMonitorLog = async (datasetId, accessToken) => {
-    const response = await axios.get(`${BASE_API_URL}dataset/${datasetId}/monitor/`, {
-        headers: {  
+export const refreshDataset = async (datasetId, accessToken) => {
+    const response = await axios.get(`${BASE_API_URL}dataset/${datasetId}/refresh/`, {
+        headers: {
             Authorization: `Bearer ${accessToken}`
         }
     });

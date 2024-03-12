@@ -1,4 +1,5 @@
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
     Card,
     CardHeader,
@@ -15,62 +16,30 @@ import {
   PlusIcon, 
   SparklesIcon, 
   TrashIcon,
-  PencilIcon
+  PencilIcon,
+  InformationCircleIcon
 } from "@heroicons/react/24/outline";
-import { AddModelDialog } from "@/widgets/dialog";
+import { AddModelDialog, TrainModelDialog, InfoModelDialog } from "@/widgets/dialog";
 import { getTrainingModels } from "@/services/prediction.service";
 import { Snackbar, Alert } from "@mui/material";
-import { useMaterialTailwindController, setSelectedDataset } from "@/context";
+import { useMaterialTailwindController, setSelectedDataset } from "@/context"; 
+import { StarIcon } from "@heroicons/react/24/solid";
 
   export function Prediction() {
     const [controller, dispatch] = useMaterialTailwindController();
     const { accessToken, selectedDataset, userInfo } = controller;
 
     const datasetModel = React.useRef(null)
+    const navigate = useNavigate();
+
+    const [selectedModel, setSelectedModel] = React.useState(null);
 
     const [loading, setLoading] = React.useState(false);
     const [showSnackbar, setShowSnackbar] = React.useState(false);
     const [showError, setShowError] = React.useState(false);
     const [openAddModelDialog, setOpenAddModelDialog] = React.useState(false);
-
-    // const [activePage, setActivePage] = React.useState(1);
- 
-    // const next = async () => {
-    //   if (activePage === datasetModel.current?.total_pages) return;
-      
-    //   try{
-    //     setLoading(true);
-    //     const res = await getPreviosNextPage(datasetModel.current?.next, accessToken)
-    //     if (res.status === 200) {
-    //       datasetModel.current = res.data;
-    //       setLoading(false);
-    //       setActivePage(activePage + 1);
-    //     }
-    //   }
-    //   catch (error) {
-    //     console.error(error);
-    //     setShowError(true);
-    //     setLoading(false);
-    //   }      
-    // };
-  
-    // const prev = async () => {
-    //   if (activePage === 1) return;      
-    //   try{
-    //     setLoading(true);
-    //     const res = await getPreviosNextPage(datasetModel.current?.previous, accessToken)
-    //     if (res.status === 200) {
-    //       datasetModel.current = res.data;
-    //       setLoading(false);
-    //       setActivePage(activePage - 1);
-    //     }
-    //   }
-    //   catch (error) {
-    //     console.error(error);
-    //     setShowError(true);
-    //     setLoading(false);
-    //   }
-    // };
+    const [openTrainModelDialog, setOpenTrainModelDialog] = React.useState(false);
+    const [openInfoModelDialog, setOpenInfoModelDialog] = React.useState(false);
 
     const fetchData = async () => {
       try {
@@ -91,12 +60,28 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
       fetchData();
     }, [selectedDataset]);
 
+    React.useEffect(() => {
+      console.log(selectedModel);       
+    }, [selectedModel]);
+
     return (
       <>
       <AddModelDialog
         open={openAddModelDialog}
         onClose={() => setOpenAddModelDialog(false)}
         selectedDataset={selectedDataset}
+      />
+      <TrainModelDialog
+        open={openTrainModelDialog}
+        onClose={() => setOpenTrainModelDialog(false)}
+        selectedDataset={selectedDataset}
+        selectedModel={selectedModel}
+      />
+      <InfoModelDialog
+        open={openInfoModelDialog}
+        onClose={() => setOpenInfoModelDialog(false)}
+        selectedDataset={selectedDataset}
+        selectedModel={selectedModel}
       />
 
       {/* Error Snackbar */}
@@ -119,7 +104,7 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
               Failed to Load Models!
           </Alert>      
       </Snackbar>
-      <div className="mt-12 mb-8 flex flex-col gap-12">
+      <div className="mt-8 mb-8 flex flex-col gap-12">
         <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-1 xl:grid-cols-1">
           <Card>
             <CardHeader variant="gradient" color="gray" className=" p-6">
@@ -173,16 +158,18 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
                 {
                     selectedDataset ? 
                     <div className="flex flex-row justify-between items-center">
-                        <div>{selectedDataset.value.name} Models</div>
+                        <div>{selectedDataset.value.name} Predictions</div>
                         <Button         
                             size="sm"    
                             color="blue-gray" 
-                            onClick={() => setOpenAddModelDialog(true)}                       
+                            onClick={() => {
+                                navigate('/dashboard/models');
+                            }}                       
                             className="flex flex-row gap-4 items-center">
-                            <PlusIcon                    
+                            <SparklesIcon                    
                                 className={`w-5 h-5 text-white`}                    
                             />
-                            Add Models
+                            Show Models
                             </Button>
                     </div> 
                     : "No dataset selected"
@@ -190,217 +177,42 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
                 </div>}
             </Typography>
           </CardHeader>
-          <CardBody className="overflow-scroll px-0 pt-0 pb-2 max-h-[500px]">            
+          <CardBody className="overflow-scroll px-6 pt-0 pb-2 max-h-[500px]">            
             {datasetModel.current?.length > 0  ? ( 
-            <table className="w-full min-w-[640px] table-auto">
-              <thead className="sticky top-0 z-1 bg-white">
-                <tr>
-                  {Object.keys(datasetModel.current[0]).map((el) => ( el !== "id" && el !== "dataset" && el !== "file_extension" &&
-                    <th
-                      key={el}
-                      className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left"
-                    >
-                      <Typography                        
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center" 
-                      >
-                        {el}                        
-                      </Typography>
-                    </th>
-                  ))}
-                  {/* WILL BE INCLUDED IN DATA LATER */}
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Input Layer 
-                    </Typography>
-                  </th>
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Output Layer
-                    </Typography>
-                  </th>
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Status
-                    </Typography>
-                  </th>
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Task
-                    </Typography>
-                  </th>
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Optimizer Function
-                    </Typography>
-                  </th>
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Epochs
-                    </Typography>
-                  </th>
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Batch Size
-                    </Typography>
-                  </th>
-
-                  <th className="border-b-4 border-r border-blue-gray-50 py-3 px-5 text-left">                
-                    <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="text-xs font-semibold uppercase flex flex-row gap-2 items-center"
-                        >
-                        Actions
-                    </Typography>
-                  </th>
-                </tr>
-              </thead>
+            <table className="table-auto text-left w-full">
               <tbody>
-                {datasetModel.current.map((row, key) => {
-                  const className = `py-3 px-5 ${
-                    key === datasetModel.current.length
-                      ? ""
-                      : "border-b border-r border-blue-gray-50"
-                  }`;
-                  return (
-                    <tr key={key}>
-                      {Object.keys(row).map((el) => ( el !== "id" && el !== "dataset" && el !== "file_extension" &&
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            {row[el]}
-                          </Typography>
-                        </td>
-                      ))}
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            ------
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            ------
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            ------
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            ------
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            ------
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            ------
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
-                          >
-                            ------
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <div className="flex gap-4">
-                            <Tooltip content="Train">
-                              <IconButton
-                                color="green"
-                                onClick={() => console.log('clicked')}
-                              >
-                                <SparklesIcon
-                                  strokeWidth={2}
-                                  className="h-5 w-5"
-                                />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip content="Edit">
-                              <IconButton
-                                color="indigo"
-                                onClick={() => {                                                                      
-                                }}
-                              >
-                                <PencilIcon
-                                  strokeWidth={2}
-                                  className="h-5 w-5"
-                                />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip content="Delete">
-                              <IconButton
-                                color="red"
-                                onClick={() => console.log('deleted')}
-                              >
-                                <TrashIcon
-                                  strokeWidth={2}
-                                  className="h-5 w-5"
-                                />
-                              </IconButton>
-                            </Tooltip>
-                          </div>
-                        </td>
-                    </tr>
-                  );
-                })}
+                <tr>
+                  <td className=" font-bold border-blue-gray-100 px-4 py-2 items-start">                              
+                    <Typography variant="small" className="font-semibold text-blue-gray-700 uppercase">
+                      Current default model
+                    </Typography>                          
+                  </td>
+                  <td className="border-blue-gray-100 px-4 py-2">
+                    {datasetModel.current.filter((model) => model.default_model)
+                    .map((model, key) => (
+                      <div key={key} className="flex flex-row gap-4 items-center">
+                        <IconButton
+                          size="sm"
+                          onClick={() => {
+                            // setSelectedModel({
+                            //   label: row.name,
+                            //   value: row                                  
+                            // });     
+                            // setOpenInfoModelDialog(true);
+                          }}
+                        >
+                          <InformationCircleIcon
+                            strokeWidth={2}
+                            className="h-5 w-5"
+                          />
+                        </IconButton>
+                        <Typography variant="small" className="font-normal">
+                          {model.name}
+                        </Typography>
+                      </div>
+                    ))}
+                  </td>
+                </tr>
               </tbody>
             </table>
           ) : 
@@ -413,144 +225,12 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
               </div>
             </div>
                 
-          )}              
+          )}
             
           </CardBody>
           <CardFooter className="justify-center">
-          {/* {datasetModel.current && 
-          <div className="flex items-center justify-center gap-8">
-            <IconButton
-              size="sm"
-              variant="outlined"
-              onClick={prev}
-              disabled={activePage === 1}
-            >
-              <ArrowLeftIcon strokeWidth={2} className="h-4 w-4" />
-            </IconButton>
-            <Typography color="gray" className="font-normal">
-              Page <strong className="text-gray-900">{activePage}</strong> of{" "}
-              <strong className="text-gray-900">{datasetModel.current.total_pages}</strong>
-            </Typography>
-            <IconButton
-              size="sm"
-              variant="outlined"
-              onClick={next}
-              disabled={activePage === datasetModel.current?.total_pages}
-            >
-              <ArrowRightIcon strokeWidth={2} className="h-4 w-4" />
-            </IconButton>
-          </div>} */}
           </CardFooter>
-        </Card>
-        {/* <Card>
-          <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-            <Typography variant="h6" color="white">
-              Projects Table
-            </Typography>
-          </CardHeader>
-          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-            <table className="w-full min-w-[640px] table-auto">
-              <thead>
-                <tr>
-                  {["companies", "members", "budget", "completion", ""].map(
-                    (el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-bold uppercase text-blue-gray-400"
-                        >
-                          {el}
-                        </Typography>
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {projectsTableData.map(
-                  ({ img, name, members, budget, completion }, key) => {
-                    const className = `py-3 px-5 ${
-                      key === projectsTableData.length - 1
-                        ? ""
-                        : "border-b border-blue-gray-50"
-                    }`;
-  
-                    return (
-                      <tr key={name}>
-                        <td className={className}>
-                          <div className="flex items-center gap-4">
-                            <Avatar src={img} alt={name} size="sm" />
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-bold"
-                            >
-                              {name}
-                            </Typography>
-                          </div>
-                        </td>
-                        <td className={className}>
-                          {members.map(({ img, name }, key) => (
-                            <Tooltip key={name} content={name}>
-                              <Avatar
-                                src={img}
-                                alt={name}
-                                size="xs"
-                                variant="circular"
-                                className={`cursor-pointer border-2 border-white ${
-                                  key === 0 ? "" : "-ml-2.5"
-                                }`}
-                              />
-                            </Tooltip>
-                          ))}
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-medium text-blue-gray-600"
-                          >
-                            {budget}
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <div className="w-10/12">
-                            <Typography
-                              variant="small"
-                              className="mb-1 block text-xs font-medium text-blue-gray-600"
-                            >
-                              {completion}%
-                            </Typography>
-                            <Progress
-                              value={completion}
-                              variant="gradient"
-                              color={completion === 100 ? "green" : "gray"}
-                              className="h-1"
-                            />
-                          </div>
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            as="a"
-                            href="#"
-                            className="text-xs font-semibold text-blue-gray-600"
-                          >
-                            <EllipsisVerticalIcon
-                              strokeWidth={2}
-                              className="h-5 w-5 text-inherit"
-                            />
-                          </Typography>
-                        </td>
-                      </tr>
-                    );
-                  }
-                )}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card> */}
+        </Card>        
       </div>
       </>
     );

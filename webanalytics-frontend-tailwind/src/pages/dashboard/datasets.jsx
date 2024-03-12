@@ -21,8 +21,11 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
     const [loading, setLoading] = React.useState(false);
     const [showSnackbar, setShowSnackbar] = React.useState(false);
     const [showError, setShowError] = React.useState(false);
+    const [isAscending, setIsAscending] = React.useState(true);
 
     const [activePage, setActivePage] = React.useState(1);
+    const [page_size, setPage_size] = React.useState(50);
+    const page_sizeOptions = [25, 50, 100, 200];
  
     const next = async () => {
       if (activePage === datasetData.current?.total_pages) return;
@@ -75,6 +78,22 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
         setLoading(false);
       }
     };
+
+    const handleSort = async (column, asc) => {
+      try {
+        setLoading(true);
+        const res = await getDatasetData(selectedDataset.value.id, accessToken, 1, page_size, 'true', asc, column);
+        if (res.status === 200) {
+          datasetData.current = res.data;
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error(error);
+        setShowError(true);
+        setLoading(false);
+      }
+    };
+
 
     React.useEffect(() => {    
       fetchData();
@@ -174,7 +193,11 @@ import { useMaterialTailwindController, setSelectedDataset } from "@/context";
                           size="sm"
                           variant="text"
                           color="blue-gray"
-                          onClick={() => console.log("Sort by " + el)}
+                          onClick={() => {
+                            console.log("Sort by " + el)
+                            setIsAscending(!isAscending);
+                            handleSort(el, isAscending);
+                          }}
                         >
                           <ChevronDownIcon className="h-5 w-5" />
                         </IconButton>

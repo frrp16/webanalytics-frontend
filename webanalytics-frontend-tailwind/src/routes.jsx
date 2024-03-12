@@ -6,11 +6,12 @@ import {
   ServerStackIcon,
   RectangleStackIcon,
   ChartBarIcon,
-  ArrowTrendingUpIcon
+  ArrowTrendingUpIcon,
+  SparklesIcon
 } from "@heroicons/react/24/solid";
 
 import { useMaterialTailwindController } from "@/context";
-import { Home, Profile, Tables, Notifications, Datasets, Prediction } from "@/pages/dashboard";
+import { Home, Profile, Tables, Notifications, Datasets, Models, Prediction } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
 
 const icon = {
@@ -38,18 +39,24 @@ export const routes = [
         name: "datasets",
         path: "/datasets",
         element: <Datasets />,
-      },
+      },      
       {
-        icon: <InformationCircleIcon {...icon} />,
-        name: "notifications",
-        path: "/notifications",
-        element: <Notifications />,
+        icon: <SparklesIcon {...icon} />,
+        name: "models",
+        path: "/models",
+        element: <Models />,
       },
       {
         icon: <ChartBarIcon {...icon} />,
         name: "prediction",
         path: "/prediction",
         element: <Prediction />,
+      },
+      {
+        icon: <InformationCircleIcon {...icon} />,
+        name: "notifications",
+        path: "/notifications",
+        element: <Notifications />,
       },
     ],
   },

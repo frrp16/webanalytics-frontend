@@ -68,7 +68,10 @@ export function AddDatasetDialog({ open, onClose, edit, selectedEditDataset }) {
             open={showSnackbar}
             anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             autoHideDuration={5000}
-            onClose={() => setShowSnackbar(false)}
+            onClose={() => {
+                setShowSnackbar(false);
+                window.location.reload();
+            }}
         >
             {/* success alert */}
             <Alert

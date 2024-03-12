@@ -14,123 +14,67 @@ import {
 import { getUserInfo } from "@/services/auth.service";
 import { addNewTrainingModel } from "@/services/prediction.service";
 import { useMaterialTailwindController } from "@/context";
-import { EyeIcon, EyeSlashIcon, ChevronDoubleDownIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
+import { EyeIcon, EyeSlashIcon, ChevronDoubleDownIcon, InformationCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { Snackbar, Alert, Backdrop } from "@mui/material";
 import Select from 'react-select';
-import { set } from "date-fns";
 
-export function AddModelDialog({ open, onClose, selectedDataset }) {
+export function InfoModelDialog({ open, onClose, selectedDataset, selectedModel }) {
     const [controller, dispatch] = useMaterialTailwindController();
     const { accessToken } = controller;
 
-    const [newModel, setNewModel] = React.useState({
-        dataset: selectedDataset?.value?.id,
-        output_shape: 1,
-    });    
-
     const [loading, setLoading] = React.useState(false);    
-    const [showSnackbar, setShowSnackbar] = React.useState(false);
-    const [showError, setShowError] = React.useState(false);
-    const [advanceOptions, setAdvanceOptions] = React.useState(false);
     
-
-    const handleSubmitModel = async () => {
-        try {
-            setLoading(true);
-            const res = await addNewTrainingModel(newModel, accessToken);
-            if (res.status === 200 || res.status === 201) {
-                const resUserInfo = await getUserInfo(accessToken);  
-                if (resUserInfo.status === 200){
-                    setLoading(false);
-                    setShowSnackbar(true);
-                    await new Promise((resolve) => setTimeout(resolve, 5000));
-                    window.location.reload();    
-                }   
-            }
-        } catch (error) {
-            console.error(error);   
-            setShowError(true);         
-            setLoading(false);
-        }
-        finally {
-            setLoading(false);
-        }
-    }
-
     useEffect(() => {
-        console.log(newModel);
+        console.log(selectedModel);
     }
-    , [newModel]);
+    , [selectedModel]);
 
     return (
-    <>
-        <Snackbar
-            sx={{ zIndex: 10000 }}
-            open={showSnackbar}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            autoHideDuration={5000}
-            onClose={() => {
-                setShowSnackbar(false);
-                window.location.reload();
-            }}
-        >
-            {/* success alert */}
-            <Alert
-                onClose={() => {
-                    setShowSnackbar(false);
-                    window.location.reload();
-                }}
-                severity="success"
-                variant="filled"
-            >
-                Model Created Successfully!
-            </Alert>
-        </Snackbar>   
-        {/* Error Snackbar */}
-        <Snackbar
-            sx={{ zIndex: 10000 }}
-            open={showError}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            autoHideDuration={5000}
-            onClose={() =>{
-                setShowError(false);             
-            }}
-            >      
-            <Alert
-                onClose={() =>{
-                    setShowError(false);                
-                }}
-                severity="error"
-                variant="filled"
-                sx={{ width: '100%' }}
-            >
-                Model Creation Failed!
-            </Alert>      
-        </Snackbar>           
-        <Dialog size="sm" open={open} onClose={onClose} className="p-4 max-w-screen max-h-screen overflow-auto">
+    <>                  
+        <Dialog size="md" open={open} onClose={onClose} className="p-4 my-2 max-w-screen max-h-screen overflow-auto">
         <DialogHeader onClose={onClose} className="justify-center">
             <Typography                
                 className="font-semibold text-xl"
-            >{`Add new deep learning model for ${selectedDataset?.value?.name}`}
+            >{`Model ${selectedModel?.label} on ${selectedDataset?.label} Info`}
             </Typography>
         </DialogHeader>
         <DialogBody className="overflow-auto">
-            {/* Create input with menu */}
-            <form onSubmit={handleSubmitModel}>  
-                <div className="overflow-auto no-scrollbar flex flex-col gap-6 w-full pt-2">                                                                                                                                   
-                    <Input
+            {/* Model information HERE */}
+            <div className="overflow-auto no-scrollbar flex flex-col gap-6 w-full pt-2">
+                <div>
+                    <Typography
+                        color="black"
+                        variant="small"
+                        className="font-normal text-xs"
+                    >
+                        Model name
+                    </Typography>
+                    <Input 
+                        className="col-span-2 w-full"
                         onChange={(e) => {                            
-                            setNewModel(prevState => ({...prevState, name: e.target.value}))
+                            
                         }}
+                        disabled
                         label="Model name"                        
-                        required                                          
-                    />                      
+                        value={selectedModel?.value?.name}                                        
+                    />  
+                </div>  
+                <div className="grid grid-cols-2 gap-4 items-center">                                
                     <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Algorithm
+                        </Typography>
                         <Select
-                            onChange={(e) => setNewModel(prevState => ({...prevState, algorithm: e.value}))}
+                            onChange={(e) => {
+                                
+                            }}
+                            isDisabled={true}
                             className="w-full border rounded text-sm font-normal text-blue-gray-500"
                             placeholder="Algorithm"
-                            required    
                             options={
                                 [
                                     { value: 'RANDOM_FOREST', label: 'Random Forest' },
@@ -138,46 +82,64 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                                     { value: 'LSTM', label: 'Long Short-Term Memory' },
                                     { value: 'CNN', label: 'Convolutional Neural Network' },                                    
                                 ]                                
-                            }                                                                                                           
+                            }
+                            value={{value: selectedModel?.value?.algorithm, label: selectedModel?.value?.algorithm}}
                         />    
                         <Typography
                             variant="small"                            
                             className="mt-2 flex items-center gap-1 font-normal text-xs"
                         >
                             <InformationCircleIcon className="h-4 w-4" />
-                            Choose the algorithm for the model
+                            The algorithm for the model
                         </Typography>
                     </div>
                     <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Task
+                        </Typography>
                         <Select
-                            onChange={(e) => setNewModel(prevState => ({...prevState, task: e.value}))}
+                            onChange={(e) => {}}
                             className="w-full border rounded text-sm font-normal text-blue-gray-500"
                             placeholder="Task"
-                            required    
+                            isDisabled={true}
                             options={
                                 [
-                                    { value: 'Binary', label: 'Binary Classification' },
-                                    { value: 'Classification', label: 'Multiclass Classification' },
+                                    { value: 'Classification', label: 'Classification' },
                                     { value: 'Regression', label: 'Regression' },
                                     { value: 'Anomaly Detection', label: 'Anomaly Detection' },
                                 ]                                
-                            }                                                                                                           
+                            }    
+                            value={{value: selectedModel?.value?.task, label: selectedModel?.value?.task}}                                                                                                       
                         />    
                         <Typography
                             variant="small"                            
                             className="mt-2 flex items-center gap-1 font-normal text-xs"
                         >
                             <InformationCircleIcon className="h-4 w-4" />
-                            Choose the task for the model
+                            The task for the model
                         </Typography>
-                    </div>                    
+                    </div>
+                </div> 
+                <div className="grid grid-cols-2 items-start gap-4">
                     <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Input Shape
+                        </Typography>
                         <Input
                             onChange={(e) => {
-                                setNewModel(prevState => ({...prevState, input_shape: e.target.value}))
+                                
                             }}
+                            disabled
                             label="Input shape"
-                            required   
+                            value={selectedModel?.value?.input_shape}
                             type="number"                                                                                 
                         />  
                         <Typography
@@ -185,17 +147,24 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             className="mt-2 flex items-center gap-1 font-normal text-xs"
                         >
                             <InformationCircleIcon className="h-4 w-4" />
-                            This would be the number of features that the model would take as input
+                            The number of features o fthe model
                         </Typography>
                     </div> 
                     <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Output Shape
+                        </Typography>
                         <Input
                             onChange={(e) => {
-                                setNewModel(prevState => ({...prevState, output_shape: e.target.value}))
+                              
                             }}
-                            {...newModel.algorithm === 'RANDOM_FOREST' && {value: 1}}
-                            {...newModel.algorithm === 'RANDOM_FOREST' && {disabled: true}}
-                            label="Output shape"     
+                            disabled
+                            label="Output shape"
+                            value={selectedModel?.value?.output_shape}     
                             type="number"                                                                         
                         />  
                         <Typography
@@ -203,10 +172,11 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             className="mt-2 flex items-center gap-1 font-normal text-xs"
                         >
                             <InformationCircleIcon className="h-4 w-4" />
-                            {...newModel.algorithm === 'RANDOM_FOREST' ? "Random Forest only supports one target" : "This would be the number of target for the model. Default is 1"}
+                            The number of target for the model.
                         </Typography>
                     </div>
-                    <div className="mx-2"> 
+                </div>
+                    {/* <div className="mx-2"> 
                         <Switch
                             checked={advanceOptions}
                             onChange={(e) => setAdvanceOptions(e.target.checked)}
@@ -219,15 +189,24 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                                 </Typography>
                             }
                         />  
-                    </div>   
-                    {advanceOptions && newModel.algorithm == "RANDOM_FOREST" &&
+                    </div>    */}
+                    {selectedModel?.value?.algorithm == "RANDOM_FOREST" &&
                     <>
                     <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Maximum depth
+                        </Typography>
                         <Input
                             onChange={(e) => {
-                                setNewModel(prevState => ({...prevState, max_depth: e.target.value}))
+                                
                             }}
-                            label="Maximum depth"                                                                                   
+                            disabled
+                            label="Maximum depth"     
+                            value={selectedModel?.value?.max_depth}                                                                              
                         />  
                         <Typography
                             variant="small"                            
@@ -238,77 +217,135 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                         </Typography>
                     </div>
                     <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Maximum tree
+                        </Typography>
                         <Input
                             onChange={(e) => {
-                                setNewModel(prevState => ({...prevState, num_tree: e.target.value}))
+                                
                             }}
-                            label="Maximum tree"                                                                                
+                            disabled
+                            label="Maximum tree"   
+                            value={selectedModel?.value?.num_trees}                                                                             
                         />  
                         <Typography
                             variant="small"                            
                             className="mt-2 flex gap-1 font-normal text-xs"
                         >
                             <InformationCircleIcon className="h-4 w-4" />
-                            The maximum number of trees in the forest.
+                            The maximum number of trees in the random forest.
                         </Typography>
                     </div>
                     </>}
-                    {advanceOptions &&  newModel.algorithm != "RANDOM_FOREST" &&     
+                    {selectedModel?.value?.algorithm != "RANDOM_FOREST" &&     
                     <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Hidden Layers
+                        </Typography>
                         <Input
                             onChange={(e) => {
-                                setNewModel(prevState => ({...prevState, hidden_layers: e.target.value}))
+                                
                             }}
-                            label="Hidden layers"                                                                               
+                            disabled
+                            label="Hidden layers"
+                            value={selectedModel?.value?.hidden_layers}
                         />  
                         <Typography
                             variant="small"                            
                             className="mt-2 flex gap-1 font-normal text-xs"
                         >
                             <InformationCircleIcon className="h-4 w-4" />
-                            Enter the number of hidden layers for the model separated by comma. Eg. 128, 64, 32
+                           The number of hidden layers of the model
                         </Typography>
                     </div>    
                     }
-                    {advanceOptions && <>
+                 
+                    <div>
+                        <Typography
+                            color="black"
+                            variant="small"
+                            className="font-normal text-xs"
+                        >
+                            Epochs
+                        </Typography>
                         <Input
                             onChange={(e) => {
-                                setNewModel(prevState => ({...prevState, epochs: e.target.value}))
+                                
                             }}
                             label="Epochs"
-                            type="number"                        
-                        />                       
-                        <div className="flex flex-row gap-4 w-full">                                     
+                            type="number" 
+                            disabled
+                            value={selectedModel?.value?.epochs}                       
+                        />  
+                    </div>                     
+                    <div className="flex flex-row gap-4 w-full">  
+                        <div className="w-full">
+                            <Typography
+                                color="black"
+                                variant="small"
+                                className="font-normal text-xs"
+                            >
+                                Batch size
+                            </Typography>
                             <Input
                                 onChange={(e) => {
-                                    setNewModel(prevState => ({...prevState, batch_size: e.target.value}))
+                                
                                 }}
                                 label="Batch size"
                                 type="number" 
+                                disabled
+                                value={selectedModel?.value?.batch_size}
                             />
-                            {
-                                newModel?.algorithm === 'LSTM' &&
+                        </div>
+                        {
+                            selectedModel?.value?.algorithm === 'LSTM' &&
+                            <div className="w-full">
+                                <Typography
+                                    color="black"
+                                    variant="small"
+                                    className="font-normal text-xs"
+                                >
+                                    Time Steps
+                                </Typography>
                                 <Input
                                     onChange={(e) => {
-                                        setNewModel(prevState => ({...prevState, timesteps: e.target.value}))
+                                        
                                     }}
                                     label="Time steps"
                                     type="number"
+                                    disabled
+                                    value={selectedModel.value?.timesteps}
                                 />
-                            }
-                        </div>
-                    </>
-                    }
-                    {advanceOptions &&  newModel.algorithm != "RANDOM_FOREST" &&
+                            </div>
+                        }
+                    </div>
+                    {selectedModel?.value?.algorithm != "RANDOM_FOREST" &&
                     <>
                     <div className="flex flex-row gap-4">                                    
                         <div className="w-full">
+                            <Typography
+                                color="black"
+                                variant="small"
+                                className="font-normal text-xs"
+                            >
+                                Activation function
+                            </Typography>
                             <Select
                                 onChange={(e) => {
-                                    setNewModel(prevState => ({...prevState, activation: e.value}))
+                                    
                                 }}
-                                className="w-full border rounded text-xs font-normal text-blue-gray-500"
-                                placeholder="Activation function"                              
+                                className="w-full border rounded text-sm font-normal text-blue-gray-500"
+                                placeholder="Activation function"  
+                                isDisabled={true}
+                                value={{value: selectedModel?.value?.activation, label: selectedModel?.value?.activation}}                        
                                 options={
                                     [
                                         { value: 'relu', label: 'ReLU' },
@@ -328,12 +365,21 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                             </Typography>
                         </div> 
                         <div className="w-full">
+                            <Typography
+                                color="black"
+                                variant="small"
+                                className="font-normal text-xs"
+                            >
+                                Optimizers
+                            </Typography>
                             <Select
                                 onChange={(e) => {
-                                    setNewModel(prevState => ({...prevState, optimizer: e.value}))
+                                    
                                 }}
                                 className="text-sm font-normal text-blue-gray-500"
-                                placeholder="Optimizer"                              
+                                placeholder="Optimizer" 
+                                isDisabled={true}
+                                value={{value: selectedModel?.value?.optimizer, label: selectedModel?.value?.optimizer}}                             
                                 options={
                                     [
                                         { value: 'adam', label: 'Adam' },
@@ -352,29 +398,21 @@ export function AddModelDialog({ open, onClose, selectedDataset }) {
                         </div>
                     </div>  
                     </> }                                                                                                                                                                              
-                </div>   
-            </form>                  
+                </div>                 
         </DialogBody>
-        <DialogFooter className="flex gap-4">
-            <Button                                            
-                color="red"                
-                onClick={onClose}     
-                disabled={loading}     
-            >
-                {loading ? "Loading..." : "Cancel" }          
-            </Button>
-            <Button 
-                type="submit"   
-                onClick={handleSubmitModel}
-                ripple="light"
-                disabled={loading}     
+        <DialogFooter className="flex gap-4 justify-center">
+            <div className="flex gap-4">
+                <Button
+                    onClick={onClose}     
+                    disabled={loading}     
                 >
-                    {loading ? "Loading..." : "Save" }  
-            </Button>
+                    {loading ? "Loading..." : "Close" }          
+                </Button>
+            </div>
         </DialogFooter>
         </Dialog>
     </>
     );
 }
 
-export default AddModelDialog;
+export default InfoModelDialog;

@@ -26,8 +26,30 @@ import {
   projectsTableData,
   ordersOverviewData,
 } from "@/data";
+import { Snackbar, Alert } from "@mui/material";
+import { getUserInfo } from "@/services/auth.service";
+import { refreshDataset } from "@/services/dataset.service";
 import { CheckCircleIcon, ClockIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import { useMaterialTailwindController } from "@/context";
+import { useMaterialTailwindController, setUserInfo } from "@/context";
+
+const MSnackbar = ({ open, onClose, message, severity }) => {
+  return (
+      <Snackbar
+            sx={{ zIndex: 10000 }}
+            open={open}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            autoHideDuration={5000}
+            onClose={onClose}
+        >
+            <Alert
+                onClose={onClose}
+                severity={severity}
+            >
+                {message}
+            </Alert>
+        </Snackbar>
+  );
+}
 
 export function Home() {
   const [controller, dispatch] = useMaterialTailwindController();
@@ -36,8 +58,11 @@ export function Home() {
   const [showAddConnection, setShowAddConnection] = React.useState(false);
   const [showAddDataset, setShowAddDataset] = React.useState(false);
   const [editDataset, setEditDataset] = React.useState(false);
+  const [showSnackbar, setShowSnackbar] = React.useState(false);
+  const [showError, setShowError] = React.useState(false);
 
   const [selectedEditDataset, setSelectedEditDataset] = React.useState({});
+  const [message, setMessage] = React.useState('');
 
   const connectionDetails = userInfo ? [
     { label: 'Engine', value: userInfo?.connection?.database_type},
@@ -48,8 +73,49 @@ export function Home() {
 
   const modelsDetails = userInfo ? userInfo.datasets.flatMap(dataset => dataset.models) : [];
 
+  const datasetDetails = userInfo ? userInfo.datasets : [];
+
+
+  const handleRefreshDataset = async (datasetId) => {
+    try {
+      const response = await refreshDataset(datasetId, accessToken);
+      if (response.status === 200) {
+        setMessage(response.data);
+        setShowSnackbar(true);
+      }
+    } catch (error) {
+      console.error(error);
+      setShowError(true);
+      setMessage('Error refreshing dataset');
+      setShowSnackbar(true);
+      
+    }
+  }
+
+  // handle page refresh
+  React.useEffect(() => {
+    const handleBeforeUnload = async (e) => {
+      e.preventDefault();
+      const resUserInfo = await getUserInfo(accessToken);
+      if (resUserInfo.status === 200){
+        setUserInfo(dispatch, resUserInfo.data);
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }
+  , []);
+
   return (
   <>
+    <MSnackbar
+      open={showSnackbar}
+      onClose={() => setShowSnackbar(false)}
+      message={message}
+      severity={showError ? 'error' : 'info'}
+    />
     <AddConnectionDialog
       open={showAddConnection}
       onClose={() => setShowAddConnection(false)}         
@@ -209,7 +275,7 @@ export function Home() {
                     <Typography className="font-normal text-blue-gray-600 pb-2">
                     &nbsp;Models Trained<strong className="text-green-500"></strong>                      
                     </Typography>
-                    <Link to="/dashboard/prediction">
+                    <Link to="/dashboard/models">
                       <Button
                         className="flex flex-row gap-4 items-center" 
                         fullWidth
@@ -252,7 +318,7 @@ export function Home() {
                 <table className="w-full min-w-[640px] table-auto">
                   <thead >
                     <tr>
-                      {["name", "created at", "status", "action"].map((el) => (
+                      {["name", "created at", "status","last updated", "action"].map((el) => (
                         <th
                           key={el}
                           className="border-b border-blue-gray-50 py-3 px-5 text-left"
@@ -309,11 +375,16 @@ export function Home() {
                               </div>
                             </td>
                             <td className={className}>
+                              <Typography className="text-xs font-semibold text-blue-gray-600">
+                                {dataset.monitor_log.length > 0 ? format(parseISO(dataset?.monitor_log?.slice(-1)[0]?.date_updated), 'dd-MM-yyyy HH:mm:ss') : '-'}
+                              </Typography>
+                            </td>
+                            <td className={className}>
                               <div className="flex gap-4">
                                 <Tooltip content="Refresh">
                                   <IconButton
                                     color="green"
-                                    onClick={() => console.log('clicked')}
+                                    onClick={() => handleRefreshDataset(dataset.id)}
                                   >
                                     <ArrowPathIcon
                                       strokeWidth={2}
