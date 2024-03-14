@@ -19,6 +19,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
+import { chartsConfig } from "@/configs";
 import { AddConnectionDialog, AddDatasetDialog } from "@/widgets/dialog";
 import {
   statisticsCardsData,
@@ -72,8 +73,48 @@ export function Home() {
   ] : [];  
 
   const modelsDetails = userInfo ? userInfo.datasets.flatMap(dataset => dataset.models) : [];
+  const lastMonitorLog = userInfo ? userInfo.datasets.flatMap(dataset => dataset.monitor_log?.slice(-1)) : [];
+  
+  const rowChanges = userInfo ? userInfo.datasets.map(dataset => {
+    return ({
+      name: dataset.name,
+      changes: dataset.monitor_log.slice(-10).flatMap(log => {
+        return ({
+          date: log.date_updated,
+          added_rows: log.changes?.added_rows?.length == undefined ? 0 : log.changes.added_rows.length,
+        })
+      })
+    })
+    }) : [];
 
-  const datasetDetails = userInfo ? userInfo.datasets : [];
+  const chartDataFunction = (data, category, color) => {
+    return (
+      {
+        type: "line",
+        height: 300,
+        series: [
+          {
+            name: "Changes",
+            data: data,
+          },
+        ],
+        options: {
+          ...chartsConfig,
+          colors: [color],
+          stroke: {
+            lineCap: "round",
+          },
+          markers: {
+            size: 3,
+          },
+          xaxis: {
+            ...chartsConfig.xaxis,
+            categories: category,
+          },
+        },
+      }
+    );
+  }
 
 
   const handleRefreshDataset = async (datasetId) => {
@@ -93,20 +134,21 @@ export function Home() {
   }
 
   // handle page refresh
-  React.useEffect(() => {
-    const handleBeforeUnload = async (e) => {
-      e.preventDefault();
-      const resUserInfo = await getUserInfo(accessToken);
-      if (resUserInfo.status === 200){
-        setUserInfo(dispatch, resUserInfo.data);
-      }
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    }
-  }
-  , []);
+  // React.useEffect(() => {
+    
+  //   const handleBeforeUnload = async (e) => {
+  //     e.preventDefault();
+  //     const resUserInfo = await getUserInfo(accessToken);
+  //     if (resUserInfo.status === 200){
+  //       setUserInfo(dispatch, resUserInfo.data);
+  //     }
+  //   }
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
+  //   return () => {
+  //     window.removeEventListener('beforeunload', handleBeforeUnload);
+  //   }
+  // }
+  // , []);
 
   return (
   <>
@@ -294,14 +336,28 @@ export function Home() {
                 title="New Data"
                 icon={React.createElement(TableCellsIcon, {
                   className: "w-6 h-6 text-white",
+                  onClick: () => console.log(rowChanges)
                 })
                 }
-                value={userInfo?.datasets?.length}
+                value={lastMonitorLog?.flatMap(log => log?.changes?.added_rows).length}
                 footer={
                   <>
-                    <Typography className="font-normal text-blue-gray-600 pb-2">
-                    &nbsp;From <strong className="text-green-500">0</strong>&nbsp;Dataset(s)                      
-                    </Typography>                    
+                    <Typography 
+                    onClick={() => console.log(lastMonitorLog)}
+                    className="font-normal text-blue-gray-600 pb-2">
+                    &nbsp;From <strong className="text-green-500">
+                        {lastMonitorLog?.filter(log => log.changes.added_rows.length > 0).length}
+                      </strong>&nbsp;Dataset(s)                      
+                    </Typography>    
+                    <Link to="/dashboard/prediction">
+                      <Button
+                        className="flex flex-row gap-4 items-center" 
+                        fullWidth
+                      >
+                        
+                        Go to prediction
+                      </Button>
+                    </Link>                
                   </>
                 }
               />
@@ -455,211 +511,40 @@ export function Home() {
         ))}
       </div> */}
       </>
-      }
-      {/* chart */}
-      {(userInfo?.connection && userInfo?.datasets) && <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-        {statisticsChartsData.map((props) => (
-          <StatisticsChart
-            key={props.title}
-            {...props}
-            footer={
-              <Typography
-                variant="small"
-                className="flex items-center font-normal text-blue-gray-600"
-              >
-                <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                &nbsp;{props.footer}
-              </Typography>
-            }
-          />
-        ))}
-      </div>}
-      {/* <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 flex items-center justify-between p-6"
-          >
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-1">
-                Projects
-              </Typography>
-              <Typography
-                variant="small"
-                className="flex items-center gap-1 font-normal text-blue-gray-600"
-              >
-                <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
-                <strong>30 done</strong> this month
-              </Typography>
-            </div>
-            <Menu placement="left-start">
-              <MenuHandler>
-                <IconButton size="sm" variant="text" color="blue-gray">
-                  <EllipsisVerticalIcon
-                    strokeWidth={3}
-                    fill="currenColor"
-                    className="h-6 w-6"
+      }      
+      {(userInfo?.connection && userInfo?.datasets) ? 
+      <>
+      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-1 xl:grid-cols-2">
+        {rowChanges.map((dataset, index) => {
+          return (
+            
+              <Card className=" border border-blue-gray-100 shadow-sm w-full">
+                <CardHeader variant="gradient" color="gray" className="mb-2 p-6">
+                  <Typography variant="h6" color="white">
+                    Changes in {dataset.name}
+                  </Typography>
+                </CardHeader>
+                <CardBody className="px-6 pb-6 overflow-auto">
+                  <StatisticsChart
+                    key={index}
+                    color="white"
+                    title={`Changes in ${dataset.name}`}
+                    description={`Last 10 changes in ${dataset.name}`}
+                    chart={chartDataFunction(
+                      dataset.changes.map(change => change.added_rows),
+                      dataset.changes.map(change => format(parseISO(change.date), 'dd-MM-yyyy')),
+                      "#0288d1"
+                    )}
                   />
-                </IconButton>
-              </MenuHandler>
-              <MenuList>
-                <MenuItem>Action</MenuItem>
-                <MenuItem>Another Action</MenuItem>
-                <MenuItem>Something else here</MenuItem>
-              </MenuList>
-            </Menu>
-          </CardHeader>
-          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-            <table className="w-full min-w-[640px] table-auto">
-              <thead>
-                <tr>
-                  {["companies", "members", "budget", "completion"].map(
-                    (el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-6 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-medium uppercase text-blue-gray-400"
-                        >
-                          {el}
-                        </Typography>
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {projectsTableData.map(
-                  ({ img, name, members, budget, completion }, key) => {
-                    const className = `py-3 px-5 ${
-                      key === projectsTableData.length - 1
-                        ? ""
-                        : "border-b border-blue-gray-50"
-                    }`;
-
-                    return (
-                      <tr key={name}>
-                        <td className={className}>
-                          <div className="flex items-center gap-4">
-                            <Avatar src={img} alt={name} size="sm" />
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-bold"
-                            >
-                              {name}
-                            </Typography>
-                          </div>
-                        </td>
-                        <td className={className}>
-                          {members.map(({ img, name }, key) => (
-                            <Tooltip key={name} content={name}>
-                              <Avatar
-                                src={img}
-                                alt={name}
-                                size="xs"
-                                variant="circular"
-                                className={`cursor-pointer border-2 border-white ${
-                                  key === 0 ? "" : "-ml-2.5"
-                                }`}
-                              />
-                            </Tooltip>
-                          ))}
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-medium text-blue-gray-600"
-                          >
-                            {budget}
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <div className="">
-                            <Typography
-                              variant="small"
-                              className="mb-1 block text-xs font-medium text-blue-gray-600"
-                            >
-                              {completion}%
-                            </Typography>
-                            <Progress
-                              value={completion}
-                              variant="gradient"
-                              color={completion === 100 ? "green" : "blue"}
-                              className="h-1"
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  }
-                )}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
-        <Card className="border border-blue-gray-100 shadow-sm">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 p-6"
-          >
-            <Typography variant="h6" color="blue-gray" className="mb-2">
-              Orders Overview
-            </Typography>
-            <Typography
-              variant="small"
-              className="flex items-center gap-1 font-normal text-blue-gray-600"
-            >
-              <ArrowUpIcon
-                strokeWidth={3}
-                className="h-3.5 w-3.5 text-green-500"
-              />
-              <strong>24%</strong> this month
-            </Typography>
-          </CardHeader>
-          <CardBody className="pt-0">
-            {ordersOverviewData.map(
-              ({ icon, color, title, description }, key) => (
-                <div key={title} className="flex items-start gap-4 py-3">
-                  <div
-                    className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                      key === ordersOverviewData.length - 1
-                        ? "after:h-0"
-                        : "after:h-4/6"
-                    }`}
-                  >
-                    {React.createElement(icon, {
-                      className: `!w-5 !h-5 ${color}`,
-                    })}
-                  </div>
-                  <div>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="block font-medium"
-                    >
-                      {title}
-                    </Typography>
-                    <Typography
-                      as="span"
-                      variant="small"
-                      className="text-xs font-medium text-blue-gray-500"
-                    >
-                      {description}
-                    </Typography>
-                  </div>
-                </div>
-              )
-            )}
-          </CardBody>
-        </Card>
-      </div> */}
+                </CardBody>
+              </Card>
+            
+          );
+        })}
+        </div>
+      </> : 
+      <>
+      </>}      
     </div>
   </>
   );

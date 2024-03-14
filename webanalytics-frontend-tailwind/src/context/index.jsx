@@ -1,7 +1,10 @@
 import React, { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 
 import Cookies from "js-cookie";
+
+import { getUserInfo } from "@/services/auth.service";
 
 export const MaterialTailwind = React.createContext(null);
 MaterialTailwind.displayName = "MaterialTailwindContext";
@@ -54,6 +57,7 @@ export function reducer(state, action) {
 export function MaterialTailwindControllerProvider({ children }) {
   const accessTokenCookie = Cookies.get("accessToken");
   // const userInfoCookie = Cookies.get("userInfo");  
+  const location = useLocation();
   
   const initialState = {
     // style context
@@ -93,6 +97,17 @@ export function MaterialTailwindControllerProvider({ children }) {
     () => [controller, dispatch],
     [controller, dispatch]
   );
+
+  React.useEffect(() => {
+    if (controller.accessToken) {
+      getUserInfo(controller.accessToken).then((res) => {
+        if (res.status === 200) {
+          setUserInfo(dispatch, res.data);
+        }
+      });
+    }
+  }
+  , [location]);
 
   return (
     <MaterialTailwind.Provider value={value}>

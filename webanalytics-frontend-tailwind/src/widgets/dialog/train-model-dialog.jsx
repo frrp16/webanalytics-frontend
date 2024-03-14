@@ -69,6 +69,10 @@ export function TrainModelDialog({ open, onClose, selectedDataset, selectedModel
     }
     , [trainModel]);
 
+    useEffect(() => {
+        setTrainModel({})
+    }, [selectedModel])
+
     return (
     <>
         <Snackbar

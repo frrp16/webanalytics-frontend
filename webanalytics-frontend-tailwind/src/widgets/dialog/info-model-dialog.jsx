@@ -147,7 +147,7 @@ export function InfoModelDialog({ open, onClose, selectedDataset, selectedModel 
                             className="mt-2 flex items-center gap-1 font-normal text-xs"
                         >
                             <InformationCircleIcon className="h-4 w-4" />
-                            The number of features o fthe model
+                            The number of features of the model
                         </Typography>
                     </div> 
                     <div>

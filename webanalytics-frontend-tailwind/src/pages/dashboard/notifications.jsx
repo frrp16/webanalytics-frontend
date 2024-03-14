@@ -5,10 +5,12 @@ import {
   Card,
   CardHeader,
   CardBody,
+  CardFooter,
 } from "@material-tailwind/react";
+import { getUserInfo } from "@/services/auth.service";
 import { getNotifications } from "@/services/notification.service";
 import { InformationCircleIcon, CheckCircleIcon, ExclamationCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { useMaterialTailwindController } from "@/context";
+import { useMaterialTailwindController, setUserInfo } from "@/context";
 import { Alert, AlertTitle } from "@mui/material";
 
 export function Notifications() {
@@ -35,6 +37,7 @@ export function Notifications() {
         const res = await getNotifications(accessToken);
         if (res.status === 200) {
           setNotifications(res.data);
+
         }
       } catch (error) {
         console.error(error);
@@ -57,7 +60,7 @@ export function Notifications() {
             Notifications
           </Typography>
         </CardHeader>
-        <CardBody className="flex flex-col gap-4 p-4">
+        <CardBody className="flex flex-col gap-4 p-8 max-h-[400px] overflow-auto">
           {
             notifications.map((notification) => (
               <Alert
@@ -89,7 +92,8 @@ export function Notifications() {
                   {notification.message}
                 </Typography>
                 <Typography variant="small" color="blue-gray" className="text-xs">
-                {format(parseISO(notification.created_at), 'dd-MM-yyyy HH:mm:ss')}
+                {/* {format(parseISO(notification.created_at), 'dd-MM-yyyy HH:mm:ss')} */}
+                {new Date(notification.created_at).toLocaleString()}
                 </Typography>
               </Alert>
             ))
@@ -106,6 +110,14 @@ export function Notifications() {
             </Alert>
           ))} */}
         </CardBody>
+        <CardFooter
+          color="transparent"
+          className="flex justify-center p-4"
+        >
+          {/* <Typography variant="small" color="blue-gray">
+            View all
+          </Typography> */}
+        </CardFooter>        
       </Card>
       {/* <Card>
         <CardHeader

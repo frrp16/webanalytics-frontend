@@ -6,7 +6,6 @@ import {
   Sidenav,
   DashboardNavbar,
   Configurator,
-  Footer,
 } from "@/widgets/layout";
 import routes from "@/routes";
 import { useMaterialTailwindController, setOpenConfigurator } from "@/context";

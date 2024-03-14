@@ -273,16 +273,18 @@ export function Models() {
                     <tr key={key}>
                       {Object.keys(row).map((el) => ( 
                         (el == "name" || el == "status" || el == "created_at" || el == "algorithm" || el == "features" || el == "target" || el == "input_shape" || el == "output_shape") &&
-                        <td className={className}>
+                        <td className={className + ` ${row["default_model"] && 'bg-blue-gray-50'}`}>
                           <Typography
                             variant="small"
-                            className="text-xs font-bold uppercase text-blue-gray-400"
+                            className="text-xs font-bold uppercase text-blue-gray-500"
                           >
-                            {row[el]}
+                            { el == "features" || el == "target" ? JSON.stringify(row[el]) : 
+                            el == "created_at" ? new Date(row[el]).toLocaleString() :
+                            row[el]}
                           </Typography>
                         </td>
                       ))}
-                        <td className={className}>
+                        <td className={className + ` ${row["default_model"] && 'bg-blue-gray-50'}`}>
                           <div className="flex flex-col gap-4">
                             <div className="flex flex-row gap-4">
                             <Tooltip content="Info">

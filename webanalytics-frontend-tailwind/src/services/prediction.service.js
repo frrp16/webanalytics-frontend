@@ -53,3 +53,14 @@ export const updateModel = async (model_id, data, accessToken) => {
     });
     return response;
 }
+
+export const predict = async (model_id, data, accessToken) => {
+    const response = await axios.post(`${BASE_API_URL}mlmodel/${model_id}/predict/`, {
+        data
+    }, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`
+        }
+    });
+    return response;
+}
